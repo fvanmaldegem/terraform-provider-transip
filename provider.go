@@ -59,6 +59,12 @@ func Provider() *schema.Provider {
 				Description: "Use API test mode.",
 				DefaultFunc: envBoolFunc("TRANSIP_TEST_MODE"),
 			},
+			"api_url": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The URL of TransIP API",
+				Default:     schema.EnvDefaultFunc("TRANSIP_API_URL", nil),
+			},
 		},
 
 		ConfigureFunc: providerConfigure,
@@ -128,25 +134,23 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		panic(err.Error())
 	}
 
-	var client_configuration gotransip.ClientConfiguration
+	client_configuration := gotransip.ClientConfiguration{
+		AccountName: d.Get("account_name").(string),
+		Mode:        apiMode,
+		TestMode:    testMode,
+	}
+
+	if apiUrl := d.Get("api_url").(string); apiUrl != "" {
+		client_configuration.URL = apiUrl
+	}
 
 	if private_key_body != "" {
 		private_key := strings.NewReader(private_key_body)
 
-		client_configuration = gotransip.ClientConfiguration{
-			AccountName:      d.Get("account_name").(string),
-			PrivateKeyReader: private_key,
-			Mode:             apiMode,
-			TestMode:         testMode,
-			TokenCache:       cache,
-		}
+		client_configuration.PrivateKeyReader = private_key
+		client_configuration.TokenCache = cache
 	} else {
-		client_configuration = gotransip.ClientConfiguration{
-			AccountName: d.Get("account_name").(string),
-			Mode:        apiMode,
-			TestMode:    testMode,
-			Token:       access_token,
-		}
+		client_configuration.Token = access_token
 	}
 
 	client, err := gotransip.NewClient(client_configuration)

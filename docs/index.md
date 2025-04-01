@@ -61,3 +61,4 @@ resource "transip_dns_record" "vps" {
 * `private_key` - (Optional) Contents of the private key file to be used to authenticate.
 * `read_only` - (Optional) Disable API write calls.
 * `test_mode` - (Optional) Use API test mode.
+* `api_url` - (Optional) Use a different URL for the TransIP API
